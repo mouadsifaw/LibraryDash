@@ -62,7 +62,7 @@ due_date = st.date_input("Due Date", min_value=datetime.today() + timedelta(days
 if st.button("Borrow Book"):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("""
+    cursor.execute(""" 
         INSERT INTO Transactions (BookID, BorrowerID, DueDate) 
         VALUES (%s, %s, %s)""", 
         (book_options[book_choice], borrower_options[borrower_choice], due_date))
@@ -75,12 +75,12 @@ if st.button("Borrow Book"):
 # 📜 **4. Return a Book**
 st.subheader("🔄 Return a Book")
 conn = get_db_connection()
-borrowed_books = pd.read_sql("""
+borrowed_books = pd.read_sql(""" 
     SELECT T.TransactionID, B.Title, Br.Name
     FROM Transactions T
     JOIN Books B ON T.BookID = B.BookID
     JOIN Borrowers Br ON T.BorrowerID = Br.BorrowerID
-    WHERE T.ReturnDate IS NULL
+    WHERE T.ReturnDate IS NULL 
 """, conn)
 conn.close()
 
@@ -91,7 +91,7 @@ if st.button("Return Book"):
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("UPDATE Transactions SET ReturnDate = CURDATE() WHERE TransactionID = %s", (return_options[return_choice],))
-    cursor.execute("""
+    cursor.execute(""" 
         UPDATE Books 
         SET AvailableCopies = AvailableCopies + 1 
         WHERE BookID = (SELECT BookID FROM Transactions WHERE TransactionID = %s)
@@ -114,11 +114,15 @@ conn.close()
 
 st.bar_chart(df1.set_index("Title"))
 
-# 🕒 **6. View Overdue Books**
-st.subheader("⚠️ Overdue Books")
+# 🕒 **6. View Overdue Books with Fine Calculation**
+st.subheader("⚠️ Overdue Books and Fines")
 conn = get_db_connection()
 df2 = pd.read_sql("""
-    SELECT B.Title, Br.Name AS BorrowerName, DATEDIFF(CURDATE(), T.DueDate) AS DaysOverdue
+    SELECT 
+        B.Title, 
+        Br.Name AS BorrowerName, 
+        DATEDIFF(CURDATE(), T.DueDate) AS DaysOverdue,
+        DATEDIFF(CURDATE(), T.DueDate) * 1 AS FineAmount  -- Assuming $1 fine per day
     FROM Transactions T
     JOIN Books B ON T.BookID = B.BookID
     JOIN Borrowers Br ON T.BorrowerID = Br.BorrowerID
@@ -126,4 +130,5 @@ df2 = pd.read_sql("""
 """, conn)
 conn.close()
 
+st.write("These books are overdue, and fines are calculated based on the number of days overdue (assuming $1/day).")
 st.table(df2)
