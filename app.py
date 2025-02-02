@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 db_config = {
     'host': 'localhost',
     'user': 'root',
-    'password': 'your_password',
+    'password': 'Mouad@1412',
     'database': 'LibraryDB'
 }
 
